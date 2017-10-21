@@ -19,10 +19,20 @@ def processImage(imgPath, processType):
         img2 = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         sift = cv2.xfeatures2d.SIFT_create()
         (kps, descs) = sift.detectAndCompute(img2, None)
-
-        print("# kps: {}, descriptors: {}".format(len(kps), descs.shape))
+        #print("# kps: {}, descriptors: {}".format(len(kps), descs.shape))
         finalImage = cv2.drawKeypoints(img2, kps, img.copy())
-        print(type(finalImage))
+        #print(type(finalImage))
+    elif processType == 'surfFeatures':
+        img = cv2.imread(imgPath, 1)
+        img2 = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        surf = cv2.xfeatures2d.SURF_create(400)
+        surf.hessianThreshold = 50000
+        (kps, descs) = surf.detectAndCompute(img2, None)
+        # print("# kps: {}, descriptors: {}".format(len(kps), descs.shape))
+        finalImage = cv2.drawKeypoints(img2, kps, img.copy())
+    elif processType == 'cannyDetector':
+        img = cv2.imread(imgPath, 1)
+        finalImage = cv2.Canny(img, 100, 200)
     else:
         print('Path or image does not exist')
     return finalImage
