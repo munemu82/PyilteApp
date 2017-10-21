@@ -1,0 +1,42 @@
+{%extends "layout.html"%}
+{%block content%}
+<div class="commonContainer">
+<h1>Upload and transform Successful!</h1>
+<hr/>
+
+Here are the images you just uploaded. The files have been transformed using {{ processingType }} image processing function.
+The final transformed images are listed beside the original images below <p>
+
+<a href="{{ url_for('index') }}">Back to front page</a><p>
+<div class="scroll">
+<div>
+ <table style="float: left">
+    <tr><th><h3>Original Image</h3></th></tr>
+
+        {% for file in files %}
+        <tr>
+        <td>
+
+                <h2>{{ file }}</h2>
+                <img src="{{ url_for('static', filename='uploads/{}/{}'.format(uuid, file)) }}" height="400" width="350">
+        </td>
+        </tr>
+        {% endfor %}
+
+</table>
+ <table style="float: left">
+    <th><tr><th><h3>Processed Image</h3></th></tr>
+        {% for procFile in processedFiles %}
+        <tr><td>
+
+                <h2>{{ procFile }}</h2>
+                <img src="{{ url_for('static', filename='uploads/{}/{}'.format(processeduuid, procFile)) }}" height="400" width="300">
+        </td>
+        </tr>
+        {% endfor %}
+
+</table>
+</div>
+</div>
+</div>
+{%endblock%}
