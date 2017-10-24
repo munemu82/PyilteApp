@@ -2,6 +2,7 @@ from flask import Flask, request, redirect, url_for, render_template, send_file
 from processImage import processImage, resizeImage           #import our custom image processing function
 from LocalBinaryPattern import LocalBinaryPatterns
 from HOGFeaturesExtract import HOGFeaturesExtract
+import traceback
 import os
 import json
 import glob
@@ -20,11 +21,9 @@ def index():
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    global processingType
-    global procImgFullPath
-    global filename
-    global featureVectors
-    global featuresFilePath
+    global processingType, errors, errors2
+    global procImgFullPath, filename
+    global featureVectors, featuresFilePath
 
     featureVectors = []  #define feature vectors list and read the source image
 
@@ -87,8 +86,30 @@ def upload():
             signedGradients = bool(request.form['numOfBins'])
             #Create HOG Descriptor object
             hogDesc =  HOGFeaturesExtract(winSize, blockSize, blockStride, cellSize, numOfBins, signedGradients)
-            image = cv2.imread(destination)
-            finalHogVec = hogDesc.describe(image)
+            # winSize = (64, 64)
+            # blockSize = (16, 16)
+            # blockStride = (8, 8)
+            # cellSize = (8, 8)
+            # nbins = 9
+            derivAperture = 1
+            winSigma = 4.
+            histogramNormType = 0
+            L2HysThreshold = 2.0000000000000001e-01
+            gammaCorrection = 0
+            nlevels = 64
+            # hog = cv2.HOGDescriptor(winSize, blockSize, blockStride, cellSize, numOfBins, derivAperture, winSigma,
+            #                         histogramNormType, L2HysThreshold, gammaCorrection, nlevels, signedGradients)
+
+            image = cv2.imread(destination,0)
+            # winStride = (8, 8)
+            # padding = (8, 8)
+            # locations = ((10, 20),)
+            # finalHogVec = hog.compute(image, winStride, padding, locations)
+            # finalHogVec = finalHogVec.ravel()
+            try:
+                finalHogVec = hogDesc.describe(image)
+            except:
+                errors = traceback.format_exc()
             featureVectors.append(finalHogVec)
         else:
             cv2.imwrite(procImgFullPath, processImage(destination, processingType))
@@ -97,9 +118,13 @@ def upload():
     if featureVectors:      #Check if list of feature vectors is not empty
         #convert numpy array to pandas dataframe
         numpyFeatVectors = np.asarray(featureVectors)  # convert python list of features to numpy
-        df = pd.DataFrame(numpyFeatVectors)
-        featuresFilePath = target_processed+"/"+processingType+".csv"
-        df.to_csv(featuresFilePath)
+        print(numpyFeatVectors.shape)
+        try:
+            df = pd.DataFrame(numpyFeatVectors)
+            featuresFilePath = target_processed+"/"+processingType+".csv"
+            df.to_csv(featuresFilePath)
+        except:
+            errors2 = traceback.format_exc()
 
     if is_ajax:
         return ajax_response(True, upload_key)
@@ -158,6 +183,9 @@ def about():
 def imageview():
     return render_template("imageview.html")
 
+@app.route('/documentation/')
+def documentation():
+    return render_template("documentation.html")
 @app.route("/download")
 def download():
     #extract file name from featuresFilePath
