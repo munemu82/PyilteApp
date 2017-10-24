@@ -3,7 +3,13 @@
 <div class="commonContainer">
 <h1>Upload and transform Successful!</h1>
 <hr/>
+{% if btn=="download.html" %}
+    <div align="center">
+        Below is the result of your {{ processingType }} feature extraction saved as csv file.
+        Download the file using the button below  {% include btn ignore missing %}
+    </div>
 
+{% else %}
 Here are the images you just uploaded. The files have been transformed using {{ processingType }} image processing function.
 The final transformed images are listed beside the original images below <p>
 
@@ -17,8 +23,8 @@ The final transformed images are listed beside the original images below <p>
         <tr>
         <td>
 
-                <h2>{{ file }}</h2>
-                <img src="{{ url_for('static', filename='uploads/{}/{}'.format(uuid, file)) }}" height="400" width="350">
+                <h3>{{ file }}</h3>
+                <img src="{{ url_for('static', filename='uploads/{}/{}'.format(uuid, file)) }}" height="300" width="250">
         </td>
         </tr>
         {% endfor %}
@@ -29,8 +35,8 @@ The final transformed images are listed beside the original images below <p>
         {% for procFile in processedFiles %}
         <tr><td>
 
-                <h2>{{ procFile }}</h2>
-                <img src="{{ url_for('static', filename='uploads/{}/{}'.format(processeduuid, procFile)) }}" height="400" width="300">
+                <h3>{{ procFile }}</h3>
+                <img src="{{ url_for('static', filename='uploads/{}/{}'.format(processeduuid, procFile)) }}" height="300" width="250">
         </td>
         </tr>
         {% endfor %}
@@ -38,5 +44,6 @@ The final transformed images are listed beside the original images below <p>
 </table>
 </div>
 </div>
+{% endif %}
 </div>
 {%endblock%}

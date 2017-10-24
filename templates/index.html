@@ -11,19 +11,76 @@
     Other future integration include using extract features from images and save the image feature vector into a database or csv file.
 
 <form id="upload-form" action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data">
-    <h3>Select Image transformation/processing function</h3>
+    <h2>Select Image transformation/processing function</h2>
+    <hr />
     <table class="tableStyle">
-        <tr><th>Basic image transformations</th><th>Image feature detection</th></tr>
+        <tr><th>Basic image transformations</th><th>Image feature detection</th><th>Feature Extraction (Grayscale)</th> <th>Feature Extraction (Color or Grayscale)</th></th></tr>
         <tr>
             <td>
                 <input type="radio" id="grayscale" name="processingType" value="grayscale" checked> <label for="grayscale">Grayscale</label>
                 <br /><input type="radio" id="grayscaledHist" name="processingType" value="grayscaledHistEq">  <label for="grayscaledHist">Histogram Equalization (Grayscale)</label>
                 <br /><input type="radio" id="colorHist" name="processingType" value="colorHistEq"><label for="colorHist">Histogram Equalization (Color)</label>
+                <br /><input type="radio" id="imageresize" name="processingType" value="imageresize"><label for="imageresize">Image Resizing</label> --><br />
+                <table><tr>
+                        <td><strong>Width(columns)</strong><input type="text" name="resWidth" value="350">
+                            <strong>Height(rows)</strong><input type="text" name="resHeight" value="400">
+                        </td></tr></table>
+
             </td>
             <td>
                 <input type="radio" id="siftFeatures" name="processingType" value="siftFeatures"><label for="siftFeatures">SIFT Features</label>
                 <br /><input type="radio" id="surfFeatures" name="processingType" value="surfFeatures"><label for="surfFeatures">SURF Features</label>
                 <br /><input type="radio" id="cannyDetector" name="processingType" value="cannyDetector"><label for="cannyDetector">Canny Edge Detection</label>
+            </td>
+            <td>
+                <!--LBP FEATURE SELECTION FROM HERE -->
+                <input type="radio" id="LBP" name="processingType" value="LBP"> <label for="LBP">LBP</label>--><br />
+                <table><tr>
+                        <td><strong>Number Of Points</strong><input type="text" name="numPoints" value="24"><br />
+                            <strong>Radius</strong><input type="text" name="radius" value="8">
+                        </td></tr></table>
+
+                <!--SURF FEATURE SELECTION FROM HERE -->
+                <br /><input type="radio" id="SURF" name="processingType" value="SURF"> <label for="SURF">SURF</label>
+
+            </td>
+            <td>
+                <!--COLOR FEATURE SELECTION FROM HERE -->
+                <input type="radio" id="color" name="processingType" value="color"><label for="color"><label>Color histogram</label>
+
+                <!--GIST FEATURE SELECTION FROM HERE -->
+                <br /><input type="radio" id="GIST" name="processingType" value="GIST"><label for="GIST"><label>GIST</label>
+
+                    <!--HOG FEATURE SELECTION FROM HERE -->
+               <br /> <input type="radio" id="HOG" name="processingType" value="HOG"> <label for="HOG">HOG</label>--><br />
+                    <table><tr>
+                        <td><strong>WinSize</strong>(<input type="text" name="winSize1" value="64">,<input type="text" name="winSize2" value="64">)
+                        <strong>CellSize</strong>(<input type="text" name="cellSize1" value="8">,<input type="text" name="cellSize2" value="8">)
+                        <strong>BlockSize</strong>(<input type="text" name="blockSize1" value="16">,<input type="text" name="blockSize2" value="16">)
+                        </td></tr>
+                        <tr><td>
+                        <strong>BlockStride</strong>(<input type="text" name="blockStride1" value="8">,<input type="text" name="blockStride2" value="8">)
+                        <strong>Number of Bins</strong><input type="text" name="numOfBins" value="9">
+                        <label for="signedGradients"><strong>Signed Gradients</strong></label>
+                        <select id="signedGradients" name="signedGradients">
+                              <option value="True">True</option>
+                              <option value="False">False</option>
+                        </select>
+                        </td>
+                        </tr></table>
+                    <br />
+                    <!--SIFT FEATURE SELECTION FROM HERE -->
+               <br /> <input type="radio" id="SIFT" name="processingType" value="SIFT"> <label for="SIFT">SIFT</label>--><br />
+                    <table><tr>
+                        <td><strong>No. of best features:</strong><input type="text" name="nfeatures" value="8">
+                            <strong>No. of Octave Layers:</strong><input type="text" name="nOctaveLayers" value="3">
+                        <strong>Contrast Threshold:</strong><input type="text" name="contrastThreshold" value="0.04">
+                        </td></tr>
+                        <tr><td>
+                        <strong>Edge Threshold:</strong><input type="text" name="edgeThreshold" value="10">
+                            <strong>Sigma:</strong><input type="text" name="blockStride2" value="1.6">
+                        </td>
+                        </tr></table>
             </td>
         </tr>
     </table>
@@ -46,8 +103,7 @@
 
     <input type="submit" value="Upload!" id="upload-button" class="button buttonStyled">
 </form>
-
-<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.1.1.min.js') }}"></script>
+ <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.1.1.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/uploadr.js') }}"></script>
 </div>
 {%endblock%}
