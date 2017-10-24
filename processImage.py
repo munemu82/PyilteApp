@@ -34,5 +34,11 @@ def processImage(imgPath, processType):
         img = cv2.imread(imgPath, 1)
         finalImage = cv2.Canny(img, 100, 200)
     else:
-        print('Path or image does not exist')
+        finalImage = cv2.imread(imgPath, 1)
+        #print('Path or image does not exist')
     return finalImage
+
+def resizeImage(imgPath, cols, rows):
+    img = cv2.imread(imgPath)
+    newImage = cv2.resize(img,(cols,rows))
+    return newImage

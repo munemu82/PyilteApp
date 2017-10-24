@@ -1,10 +1,14 @@
-from flask import Flask, request, redirect, url_for, render_template
-from processImage import processImage           #import our custom image processing function
+from flask import Flask, request, redirect, url_for, render_template, send_file
+from processImage import processImage, resizeImage           #import our custom image processing function
+from LocalBinaryPattern import LocalBinaryPatterns
+from HOGFeaturesExtract import HOGFeaturesExtract
 import os
 import json
 import glob
 from uuid import uuid4
 import cv2
+import numpy as np
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -17,6 +21,13 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     global processingType
+    global procImgFullPath
+    global filename
+    global featureVectors
+    global featuresFilePath
+
+    featureVectors = []  #define feature vectors list and read the source image
+
     """Handle the upload of a file."""
     form = request.form
     
@@ -42,8 +53,7 @@ def upload():
 
     print("=== Form Data ===")
     processingType = request.form['processingType']
-    print(target_processed)
-    print(processingType)
+
     for key, value in list(form.items()):
         print(key, "=>", value)
     for upload in request.files.getlist("file"):
@@ -52,20 +62,56 @@ def upload():
         print("Accept incoming file:", filename)
         print("Save it to:", destination)
         upload.save(destination)
+        procImgFullPath = target_processed + "processed_" + filename;
         #perform image processing
-        procImgFullPath = target_processed +"processed_"+filename;
-        cv2.imwrite(procImgFullPath, processImage(destination, processingType))
+        if processingType == "imageresize":
+            imgNewWidth = request.form['resWidth']
+            imgNewHeight = request.form['resHeight']
+            cv2.imwrite(procImgFullPath, resizeImage(destination, int(float(imgNewWidth)),int(float(imgNewHeight))))
+        elif processingType == "LBP":
+            numOfPoints = int(float(request.form['numPoints']))
+            radiusVal = int(float(request.form['radius']))
+            #create LBP descriptor object
+            desc = LocalBinaryPatterns(numOfPoints, radiusVal)
+            image = cv2.imread(destination)
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            hist = desc.describe(gray)
+            #add feature vectors to the list
+            featureVectors.append(hist)
+        elif processingType == "HOG":
+            winSize = (int(float(request.form['winSize1'])), int(float(request.form['winSize2'])))
+            cellSize = (int(float(request.form['cellSize1'])), int(float(request.form['cellSize2'])))
+            blockSize = (int(float(request.form['blockSize1'])), int(float(request.form['blockSize2'])))
+            blockStride = (int(float(request.form['blockStride1'])), int(float(request.form['blockStride2'])))
+            numOfBins = int(float(request.form['numOfBins']))
+            signedGradients = bool(request.form['numOfBins'])
+            #Create HOG Descriptor object
+            hogDesc =  HOGFeaturesExtract(winSize, blockSize, blockStride, cellSize, numOfBins, signedGradients)
+            image = cv2.imread(destination)
+            finalHogVec = hogDesc.describe(image)
+            featureVectors.append(finalHogVec)
+        else:
+            cv2.imwrite(procImgFullPath, processImage(destination, processingType))
+
+    #Common code for all feature extractions
+    if featureVectors:      #Check if list of feature vectors is not empty
+        #convert numpy array to pandas dataframe
+        numpyFeatVectors = np.asarray(featureVectors)  # convert python list of features to numpy
+        df = pd.DataFrame(numpyFeatVectors)
+        featuresFilePath = target_processed+"/"+processingType+".csv"
+        df.to_csv(featuresFilePath)
 
     if is_ajax:
         return ajax_response(True, upload_key)
     else:
         return redirect(url_for("upload_complete", uuid=upload_key))
 
-
 @app.route("/files/<uuid>")
 def upload_complete(uuid):
     """The location we send them to at the end of the upload."""
-
+    global file
+    global btn
+    btn = "None"
     # Get their files.
     root = "static/uploads/{}".format(uuid)
     rootProcessed = root+"/processed"
@@ -84,12 +130,8 @@ def upload_complete(uuid):
         files.append(fname)
         procFname = "processed_"+fname
         processedFiles.append(procFname)
-
-    # add processed images to the list
-    # for processedFile in glob.glob("{}/*.*".format(rootProcessed)):
-    #     processedFname = processedFile.split(os.sep)[-1]
-    #     processedFiles.append(processedFname)
-
+    if (processingType =="LBP") or (processingType =="HOG"):
+        btn = "download.html"
     #pass the list of files (uploaded and processed) to the html template (files.html)
     return render_template("files.html",
         uuid=uuid,
@@ -97,6 +139,7 @@ def upload_complete(uuid):
         processedFiles=processedFiles,
         processeduuid=processeduuid,
         processingType=processingType,
+        btn=btn,
     )
 
 
@@ -114,6 +157,12 @@ def about():
 @app.route('/imageview/')
 def imageview():
     return render_template("imageview.html")
+
+@app.route("/download")
+def download():
+    #extract file name from featuresFilePath
+    #featuresFileName = featuresFilePath.rsplit("/")[0]
+    return send_file(featuresFilePath, attachment_filename=processingType+".csv", as_attachment=True)
 
 if __name__ == '__main__':
     app.debug=True
